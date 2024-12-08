@@ -7,6 +7,7 @@ using namespace std;
 
 vector<vector<int>> worstFitWithLinearSearch(vector<int>& fileDurations, int folderDuration);
 vector<vector<int>> worstFitWithPriorityQueue(vector<int>& fileDurations, int folderDuration);
+vector<vector<int>> worstFitDecWithLinearSearch(vector<int>& fileDurations, int folderDuration);
 
 int main() {
     int folderDuration = 100;
@@ -18,7 +19,7 @@ int main() {
 
     // folders = worstFitWithLinearSearch(fileDurations, folderDuration);
     // folders = worstFitWithPriorityQueue(fileDurations, folderDuration);
-
+    folders = worstFitDecWithLinearSearch(fileDurations, folderDuration);
     auto end = chrono::steady_clock::now();
 
     auto executionTime = chrono::duration_cast<chrono::microseconds>(end - start).count();
@@ -99,4 +100,9 @@ vector<vector<int>> worstFitWithPriorityQueue(vector<int>& fileDurations, int fo
     }
 
     return folders;
+}
+vector<vector<int>> worstFitDecWithLinearSearch(vector<int>& fileDurations, int folderDuration)
+{
+    stable_sort(fileDurations.begin(), fileDurations.end(), greater<int>());
+    return worstFitWithLinearSearch(fileDurations, folderDuration);
 }
