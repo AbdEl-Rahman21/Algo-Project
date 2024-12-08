@@ -1,6 +1,7 @@
 ﻿#include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <limits>
 #include <queue>
 #include <vector>
 
@@ -11,22 +12,29 @@ vector<vector<int>> worstFitWithPriorityQueue(vector<int>& fileDurations, int fo
 vector<vector<int>> worstFitDecreasingWithLinearSearch(vector<int>& fileDurations, int folderDuration);
 vector<vector<int>> worstFitDecreasingWithPriorityQueue(vector<int>& fileDurations, int folderDuration);
 vector<vector<int>> firstFitDecreasing(vector<int>& fileDurations, int folderDuration);
+vector<vector<int>> folderFilling(vector<int> fileDurations, int folderDuration);
+int folderFillingHelper(vector<int>& fileDurations, int fileDurationsLength, int folderDuration);
 
-int main() {
+int main() {    // FIX DATA STRUCTURES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     int folderDuration = 100;
 
     vector<vector<int>> folders = { {} };
-    vector<int> fileDurations = { 70, 80, 20, 15, 15 };
+    // vector<int> fileDurations = { 70, 80, 20, 15, 15 };  // 2 folders
+    vector<int> fileDurations = { 10, 20, 25, 70, 80, 90 }; // 3 or 4 folders
+    // vector<int> fileDurations = { 10, 15, 20, 5, 70, 80 };  // 2 folders
+
+    // vector<vector<int>> memo(folderDuration + 1, vector<int>(int(fileDurations.size() + 1), 0));
 
     auto start = chrono::steady_clock::now();
 
     // folders = worstFitWithLinearSearch(fileDurations, folderDuration);
     // folders = worstFitWithPriorityQueue(fileDurations, folderDuration);
-    // 
     // folders = worstFitDecreasingWithLinearSearch(fileDurations, folderDuration);
     // folders = worstFitDecreasingWithPriorityQueue(fileDurations, folderDuration);
-    // 
     // folders = firstFitDecreasing(fileDurations, folderDuration);
+    // folders = folderFilling(fileDurations, folderDuration);
+
+    cout << folderFillingHelper(fileDurations, int(fileDurations.size()), folderDuration) << endl;
 
     auto end = chrono::steady_clock::now();
 
@@ -128,29 +136,57 @@ vector<vector<int>> firstFitDecreasing(vector<int>& fileDurations, int folderDur
     // The complexity of sort is O(N⋅log(N)) according to https://en.cppreference.com/w/cpp/algorithm/sort
     sort(fileDurations.begin(), fileDurations.end(), greater<int>());
 
-    bool firstFitFound = false;
+    bool isFirstFitFound = false;
 
     vector<vector<int>> folders = { {} };
     vector<int> remainingFolderDurations = { folderDuration };
 
     for (int i = 0; i < fileDurations.size(); i++) {
-        firstFitFound = false;
+        isFirstFitFound = false;
 
         for (int j = 0; j < remainingFolderDurations.size(); j++) {
             if (fileDurations[i] <= remainingFolderDurations[j]) {
                 folders[j].push_back(fileDurations[i]);
                 remainingFolderDurations[j] -= fileDurations[i];
-                firstFitFound = true;
+                isFirstFitFound = true;
 
                 break;
             }
         }
 
-        if (!firstFitFound) {
+        if (!isFirstFitFound) {
             folders.push_back({ fileDurations[i] });
             remainingFolderDurations.push_back(folderDuration - fileDurations[i]);
         }
     }
 
     return folders;
+}
+
+//vector<vector<int>> folderFilling(vector<int> fileDurations, int folderDuration) {
+//    vector<vector<int>> folders;
+//
+//    sort(fileDurations.begin(), fileDurations.end(), greater<int>());   // O(N⋅log(N))
+//
+//    while (!fileDurations.empty()) {
+//        folders.push_back(folderFillingHelper(fileDurations, int(fileDurations.size()), folderDuration));
+//
+//        set_symmetric_difference(fileDurations.begin(), fileDurations.end(),
+//            folders.back().begin(), folders.back().end(), back_inserter(fileDurations));
+//    }
+//    
+//    return folders;
+//}
+
+int folderFillingHelper(vector<int>& fileDurations, int fileDurationsLength, int folderDuration) {
+    if (fileDurationsLength == 0 || folderDuration == 0) {
+        return folderDuration;
+    }
+    else if (fileDurations[fileDurationsLength - 1] > folderDuration) {
+        return folderFillingHelper(fileDurations, fileDurationsLength - 1, folderDuration);
+    }
+    else {
+        return min(folderFillingHelper(fileDurations, fileDurationsLength - 1, folderDuration),
+            folderFillingHelper(fileDurations, fileDurationsLength - 1, folderDuration - fileDurations[fileDurationsLength - 1]));
+    }
 }
