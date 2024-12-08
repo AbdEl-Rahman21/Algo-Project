@@ -5,7 +5,8 @@
 
 using namespace std;
 
-vector<vector<int>> worstFitWithLinearSearch(vector<int> &fileDurations, int folderDuration);
+vector<vector<int>> worstFitWithLinearSearch(vector<int>& fileDurations, int folderDuration);
+vector<vector<int>> worstFitWithPriorityQueue(vector<int>& fileDurations, int folderDuration);
 
 int main() {
     int folderDuration = 100;
@@ -15,7 +16,8 @@ int main() {
 
     auto start = chrono::steady_clock::now();
 
-    folders = worstFitWithLinearSearch(fileDurations, folderDuration);
+    // folders = worstFitWithLinearSearch(fileDurations, folderDuration);
+    // folders = worstFitWithPriorityQueue(fileDurations, folderDuration);
 
     auto end = chrono::steady_clock::now();
 
@@ -38,7 +40,7 @@ int main() {
     return 0;
 }
 
-vector<vector<int>> worstFitWithLinearSearch(vector<int> &fileDurations, int folderDuration) {
+vector<vector<int>> worstFitWithLinearSearch(vector<int>& fileDurations, int folderDuration) {
     int mostRemainingFolderDuration = 0;
     int mostRemainingFolderDurationIndex = 0;
 
@@ -56,45 +58,45 @@ vector<vector<int>> worstFitWithLinearSearch(vector<int> &fileDurations, int fol
             }
         }
 
-        if (fileDurations[i] <= remainingFolderDurations[mostRemainingFolderDurationIndex]) {
-            folders[mostRemainingFolderDurationIndex].push_back(fileDurations[i]);
-            remainingFolderDurations[mostRemainingFolderDurationIndex] -= fileDurations[i];
-        }
-        else {
+        if (fileDurations[i] > mostRemainingFolderDuration) {
             folders.push_back({ fileDurations[i] });
             remainingFolderDurations.push_back(folderDuration - fileDurations[i]);
+        }
+        else {
+            folders[mostRemainingFolderDurationIndex].push_back(fileDurations[i]);
+            remainingFolderDurations[mostRemainingFolderDurationIndex] -= fileDurations[i];
         }
     }
 
     return folders;
 }
-void Worstfit_priority_queue(vector<int> AudiosDuration, int DesiredDuration)
-{
-    vector<vector<int>> Folders = { {} };
-    priority_queue<pair<int, int>> RemainingSpace; // first is value , second is index
-    RemainingSpace.push({ DesiredDuration , 0 });
-    for (int i = 0; i < AudiosDuration.size(); i++)
-    {
-        if (AudiosDuration[i] < RemainingSpace.top().first)
-        {
-            Folders[RemainingSpace.top().second].push_back(AudiosDuration[i]);
-            RemainingSpace.push({ RemainingSpace.top().first - AudiosDuration[i], RemainingSpace.top().second });
-            RemainingSpace.pop();
-        }
 
-        else
-        {
-            Folders.push_back({ AudiosDuration[i] });
-            RemainingSpace.push({ DesiredDuration - AudiosDuration[i], i });
+vector<vector<int>> worstFitWithPriorityQueue(vector<int>& fileDurations, int folderDuration) {
+    int mostRemainingFolderDuration = 0;
+    int mostRemainingFolderDurationIndex = 0;
+
+    vector<vector<int>> folders = { {} };
+    priority_queue<pair<int, int>> remainingFolderDurations;
+    // By default the priority of the elements is dependent upon the first element of the pair.
+    // The first element is the Remaining Duration & the second element is the Folder Index.
+
+    remainingFolderDurations.push({ folderDuration, 0 });
+
+    for (int i = 0; i < fileDurations.size(); i++) {
+        mostRemainingFolderDuration = remainingFolderDurations.top().first;
+        mostRemainingFolderDurationIndex = remainingFolderDurations.top().second;
+
+        if (fileDurations[i] > mostRemainingFolderDuration) {
+            folders.push_back({ fileDurations[i] });
+            remainingFolderDurations.push({ folderDuration - fileDurations[i], int(folders.size() - 1) });
+        }
+        else {
+            remainingFolderDurations.pop();
+
+            folders[mostRemainingFolderDurationIndex].push_back(fileDurations[i]);
+            remainingFolderDurations.push({ mostRemainingFolderDuration - fileDurations[i], mostRemainingFolderDurationIndex });
         }
     }
-    // Printing the resulting folders
-    cout << "Folders:" << endl;
-    for (int i = 0; i < Folders.size(); i++) {
-        cout << "Folder " << i + 1 << ": ";
-        for (int file : Folders[i]) {
-            cout << file << " ";
-        }
-        cout << endl;
-    }
+
+    return folders;
 }
