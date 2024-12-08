@@ -1,66 +1,70 @@
 #include <chrono>
 #include <iostream>
 #include <queue>
-#include<vector>
+#include <vector>
 
 using namespace std;
-int MostRemaining(vector<int> RemainingSpace, int DesiredDuration)
-{
-    int MaxRemaining=-1;
-    int MaxIndex = 0;
-    for (int i = 0; i < RemainingSpace.size(); i++)
-    {
-        if (MaxRemaining <= RemainingSpace[i])
-        {
-            MaxRemaining = RemainingSpace[i];
-            MaxIndex = i;
-        }
-    }
-    return MaxIndex;
-}
-void Worstfit_LinearSearch(vector<int> AudiosDuration,int DesiredDuration)
-{
-    vector<vector<int>> Folders = { {} };
-    vector<int> RemainingSpace = {DesiredDuration};
 
-        for (int i = 0; i < AudiosDuration.size(); i++)
-        {
-            int Maxindex = MostRemaining(RemainingSpace, DesiredDuration);
+vector<vector<int>> worstFitWithLinearSearch(vector<int> &fileDurations, int folderDuration);
 
-            if (AudiosDuration[i] < RemainingSpace[Maxindex] && Maxindex != -1)
-            {
-                Folders[Maxindex].push_back(AudiosDuration[i]);
-                RemainingSpace[Maxindex] -= AudiosDuration[i];
-            }
-
-            else
-            {
-                Folders.push_back({ AudiosDuration[i] });
-                RemainingSpace.push_back(DesiredDuration - AudiosDuration[i]);
-            }       
-        }
-
-    // Printing the resulting folders
-    cout << "Folders:" << endl;
-    for (int i = 0; i < Folders.size(); i++) {
-        cout << "Folder " << i + 1 << ": ";
-        for (int file : Folders[i]) {
-            cout << file << " ";
-        }
-        cout << endl;
-    }
-}
 int main() {
-    auto start = chrono::steady_clock::now();
-    vector<int> AudiosDuration = { 70, 80, 20, 15, 15 };
-    int DesiredDuration = 100;
+    int folderDuration = 100;
 
-    Worstfit_LinearSearch(AudiosDuration, DesiredDuration);
+    vector<vector<int>> folders = { {} };
+    vector<int> fileDurations = { 70, 80, 20, 15, 15 };
+
+    auto start = chrono::steady_clock::now();
+
+    folders = worstFitWithLinearSearch(fileDurations, folderDuration);
+
     auto end = chrono::steady_clock::now();
 
-    auto duration = chrono::duration_cast<chrono::microseconds>(end - start).count();
+    auto executionTime = chrono::duration_cast<chrono::microseconds>(end - start).count();
 
-    cout << "Execution time: " << duration << " microseconds" << endl;
+    cout << "Folders:-" << endl;
+
+    for (int i = 0; i < folders.size(); i++) {
+        cout << "Folder " << i + 1 << ": ";
+
+        for (int j = 0; j < folders[i].size(); j++) {
+            cout << folders[i][j] << " ";
+        }
+
+        cout << endl;
+    }
+
+    cout << "\nExecution time: " << executionTime << " microseconds" << endl;
 
     return 0;
+}
+
+vector<vector<int>> worstFitWithLinearSearch(vector<int> &fileDurations, int folderDuration) {
+    int mostRemainingFolderDuration = 0;
+    int mostRemainingFolderDurationIndex = 0;
+
+    vector<vector<int>> folders = { {} };
+    vector<int> remainingFolderDurations = { folderDuration };
+
+    for (int i = 0; i < fileDurations.size(); i++) {
+        mostRemainingFolderDuration = 0;
+        mostRemainingFolderDurationIndex = 0;
+
+        for (int j = 0; j < remainingFolderDurations.size(); j++) {
+            if (mostRemainingFolderDuration < remainingFolderDurations[j]) {
+                mostRemainingFolderDuration = remainingFolderDurations[j];
+                mostRemainingFolderDurationIndex = j;
+            }
+        }
+
+        if (fileDurations[i] <= remainingFolderDurations[mostRemainingFolderDurationIndex]) {
+            folders[mostRemainingFolderDurationIndex].push_back(fileDurations[i]);
+            remainingFolderDurations[mostRemainingFolderDurationIndex] -= fileDurations[i];
+        }
+        else {
+            folders.push_back({ fileDurations[i] });
+            remainingFolderDurations.push_back(folderDuration - fileDurations[i]);
+        }
+    }
+
+    return folders;
 }
