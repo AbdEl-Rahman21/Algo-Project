@@ -9,6 +9,8 @@ vector<vector<int>> worstFitWithLinearSearch(vector<int>& fileDurations, int fol
 vector<vector<int>> worstFitWithPriorityQueue(vector<int>& fileDurations, int folderDuration);
 vector<vector<int>> worstFitDecWithLinearSearch(vector<int>& fileDurations, int folderDuration);
 vector<vector<int>> worstFitDecWithPriorityQueue(vector<int>& fileDurations, int folderDuration);
+vector<vector<int>> firstFitDec(vector<int>& fileDurations, int folderDuration);
+
 
 
 int main() {
@@ -21,7 +23,8 @@ int main() {
 
     // folders = worstFitWithLinearSearch(fileDurations, folderDuration);
     // folders = worstFitWithPriorityQueue(fileDurations, folderDuration);
-    //folders = worstFitDecWithLinearSearch(fileDurations, folderDuration);
+    // folders = worstFitDecWithLinearSearch(fileDurations, folderDuration);
+    // folders = firstFitDec(fileDurations,folderDuration);
     auto end = chrono::steady_clock::now();
 
     auto executionTime = chrono::duration_cast<chrono::microseconds>(end - start).count();
@@ -111,4 +114,30 @@ vector<vector<int>> worstFitDecWithPriorityQueue(vector<int>& fileDurations, int
 {
     stable_sort(fileDurations.begin(), fileDurations.end(), greater<int>());
     return worstFitWithPriorityQueue(fileDurations, folderDuration);
+}
+vector<vector<int>> firstFitDec(vector<int>& fileDurations, int folderDuration)
+{
+    stable_sort(fileDurations.begin(), fileDurations.end(), greater<int>());
+    bool isFinished = false;
+
+    vector<vector<int>> folders = { {} };
+    vector<int> remainingFolderDurations = { folderDuration };
+
+    for (int i = 0; i < fileDurations.size(); i++) {
+        isFinished = false;
+        for (int j = 0; j < remainingFolderDurations.size(); j++) {
+            if (fileDurations[i] <= remainingFolderDurations[j]) {
+                folders[j].push_back(fileDurations[i]);
+                remainingFolderDurations[j] -= fileDurations[i];
+                isFinished = true;
+                break;
+            }
+        }
+
+        if (isFinished == false) {
+            folders.push_back({ fileDurations[i] });
+            remainingFolderDurations.push_back(folderDuration - fileDurations[i]);
+        }
+    }
+    return folders;
 }
