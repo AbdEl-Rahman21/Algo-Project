@@ -68,3 +68,33 @@ vector<vector<int>> worstFitWithLinearSearch(vector<int> &fileDurations, int fol
 
     return folders;
 }
+void Worstfit_priority_queue(vector<int> AudiosDuration, int DesiredDuration)
+{
+    vector<vector<int>> Folders = { {} };
+    priority_queue<pair<int, int>> RemainingSpace; // first is value , second is index
+    RemainingSpace.push({ DesiredDuration , 0 });
+    for (int i = 0; i < AudiosDuration.size(); i++)
+    {
+        if (AudiosDuration[i] < RemainingSpace.top().first)
+        {
+            Folders[RemainingSpace.top().second].push_back(AudiosDuration[i]);
+            RemainingSpace.push({ RemainingSpace.top().first - AudiosDuration[i], RemainingSpace.top().second });
+            RemainingSpace.pop();
+        }
+
+        else
+        {
+            Folders.push_back({ AudiosDuration[i] });
+            RemainingSpace.push({ DesiredDuration - AudiosDuration[i], i });
+        }
+    }
+    // Printing the resulting folders
+    cout << "Folders:" << endl;
+    for (int i = 0; i < Folders.size(); i++) {
+        cout << "Folder " << i + 1 << ": ";
+        for (int file : Folders[i]) {
+            cout << file << " ";
+        }
+        cout << endl;
+    }
+}
