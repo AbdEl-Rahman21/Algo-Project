@@ -3,6 +3,10 @@
 #include <iostream>
 #include <queue>
 #include <vector>
+#include<filesystem>
+#include<fstream>
+#include <unordered_map>
+#include <string>
 
 using namespace std;
 
@@ -14,15 +18,23 @@ void firstFitDecreasing(vector<pair<int, int>>& files, vector<int>& fileDuration
 vector<vector<int>> folderFilling(vector<int> fileDurations, int folderDuration);
 int folderFillingHelper(vector<vector<int>>& folderDurationMemo, vector<vector<char>>& fileMemo, vector<int>& fileDurations, int fileDurationsLength, int folderDuration);
 void tracefolderfiles(vector<vector<char>>& fileMemo, vector<int>& folder, vector<int>& fileDurations, int fileDurationsLength, int folderDuration);
+void create_folders(int sampleNumber, string algorithmName,  vector<vector<int>> folders, unordered_map<string, int> foldersMap, unordered_map<string, string>& foldersMapRaw);
+void readSamples(unordered_map<string, int>& foldersMap, vector<int>& encodedDurations, int sampleNumber, unordered_map<string, string>& foldersMapRaw);
+vector<int> encodeDuration(vector<string> durations);
 
 int main() {
     int folderDuration = 100;
+    unordered_map<string, int> foldersMap;
+    unordered_map<string, string> foldersMapRaw;
+    vector<vector<int>> folders;    
 
     vector<pair<int, int>> files;  // First value is the file duration -- Second value is the folder the file belongs to.
 
     // vector<int> fileDurations = { 70, 80, 20, 15, 15 };  // 2 folders
     // vector<int> fileDurations = { 10, 20, 25, 70, 80, 90 }; // 3 or 4 folders
-    vector<int> fileDurations = { 10, 15, 20, 5, 70, 80 };  // 2 folders
+    //vector<int> fileDurations = { 10, 15, 20, 5, 70, 80 };  // 2 folders
+    vector<int> fileDurations;
+    readSamples(foldersMap, fileDurations, 1, foldersMapRaw);
 
     files.reserve(fileDurations.size());
 
@@ -40,8 +52,110 @@ int main() {
     auto executionTime = chrono::duration_cast<chrono::microseconds>(end - start).count();
 
     cout << "\nExecution time: " << executionTime << " microseconds" << endl;
-
+    create_folders(1, "FolderFilling", folders,foldersMap, foldersMapRaw);
     return 0;
+}
+
+void readSamples(unordered_map<string, int> &foldersMap, vector<int> &encodedDurations, int sampleNumber, unordered_map<string, string>& foldersMapRaw) {
+    string samplePath = "Sample Tests/Sample " + to_string(sampleNumber) + "/INPUT/AudiosInfo.txt";
+    ifstream sample(samplePath);
+    string line;
+    string concat = "";
+    vector<string> inputs;
+    vector<string> durations;
+    
+    vector<string> names;
+    
+    while (getline(sample, line)) {
+        cout << line << endl;
+        for (int i = 0; i < line.size(); i++) {
+            if (line[i] == ' ' ) {
+                inputs.push_back(concat);
+                concat = "";
+            }
+            else if(i == line.size() - 1)
+            {
+                concat += line[i];
+                inputs.push_back(concat);
+                concat = "";
+            }
+            else
+            {
+                concat += line[i];
+            }
+            
+        }
+    }
+    for (int i = 1; i < inputs.size(); i += 2) {
+        names.push_back(inputs[i]);
+        durations.push_back(inputs[i + 1]);
+    }
+    
+    for (int i = 0; i < names.size(); i++) {
+        foldersMapRaw.insert({ names[i], durations[i] });
+    }
+
+    encodedDurations = encodeDuration(durations);
+    
+    for (int i = 0; i < names.size(); i++) {
+        foldersMap.insert({ names[i], encodedDurations[i]});
+    }
+    
+}
+
+vector<int> encodeDuration(vector<string> durations) {
+    string concat;
+    vector<int> timeToParts;
+    vector<int> finalDurations;
+    int timeToSeconds;
+    for (string val : durations) {
+        for(int i= 0; i < val.size(); i++){
+            if (val[i] == ':') {
+                timeToParts.push_back(stoi(concat));
+                concat = "";
+                continue;
+            }
+            else if (i == val.size() - 1) {
+                concat += val[i];
+                timeToParts.push_back(stoi(concat));
+            }
+            concat += val[i];
+        }
+        timeToSeconds = timeToParts[0] * 3600 + timeToParts[1] * 60 + timeToParts[2];
+        finalDurations.push_back(timeToSeconds);
+        timeToParts.clear();
+        concat = "";
+    }
+
+    return finalDurations;
+}
+
+void create_folders(int sampleNumber, string algorithmName, vector<vector<int>> folders, unordered_map<string, int> foldersMap, unordered_map<string, string>& foldersMapRaw) {
+
+    string folderPath;
+    string sourceFile ;
+    
+
+    for (int i = 0; i < folders.size(); i++) {
+        folderPath = "OUTPUT/sample " + to_string(sampleNumber) + "/" + algorithmName + "/F" + to_string(i + 1);
+        filesystem::create_directories(folderPath);
+        ofstream metaData(folderPath + "_METADATA.txt");
+        metaData << "F" + to_string(i + 1) << endl;
+        
+        
+        for (int j = 0; j < folders[i].size(); j++) {
+            for (const auto& pair : foldersMap) {
+                if (pair.second == folders[i][j]) {
+                    sourceFile = "Sample Tests/Sample 1/INPUT/Audios/" + pair.first;
+                    filesystem::copy(sourceFile, folderPath, filesystem::copy_options::overwrite_existing);
+                    metaData << pair.first << " " << foldersMapRaw[pair.first] << endl;
+                    foldersMap.erase(pair.first);
+                    break;
+                }
+            }
+        }
+        metaData.close();
+    }
 }
 
 void worstFitWithLinearSearch(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration) {
