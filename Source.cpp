@@ -20,9 +20,9 @@ void worstFitWithPriorityQueue(vector<pair<int, int>>& files, vector<int>& fileD
 void worstFitDecreasingWithLinearSearch(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration);
 void worstFitDecreasingWithPriorityQueue(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration);
 void firstFitDecreasing(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration);
-vector<vector<int>> folderFilling(vector<int> fileDurations, int folderDuration);
-int folderFillingHelper(vector<vector<int>>& folderDurationMemo, vector<vector<char>>& fileMemo, vector<int>& fileDurations, int fileDurationsLength, int folderDuration);
-void tracefolderfiles(vector<vector<char>>& fileMemo, vector<int>& folder, vector<int>& fileDurations, int fileDurationsLength, int folderDuration);
+void folderFilling(vector<pair<int, int>>& files, vector<int> fileDurations, int folderDuration);
+int folderFillingHelper(vector<vector<pair<int, int>>>& memo, vector<int>& fileDurations, int fileDurationsLength, int folderDuration);
+void tracefolderfiles(vector<vector<pair<int, int>>>& memo, vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration, int currentFolderNumber);
 
 int main() {
     int folderDuration = 100;
@@ -33,18 +33,18 @@ int main() {
 
     vector<int> fileDurations;
 
-    readInput(fileMap, fileDurations, 1);
+    readInput(fileMap, fileDurations, 2);
 
     files.reserve(fileDurations.size());
 
     auto start = chrono::steady_clock::now();
 
-    worstFitWithLinearSearch(files, fileDurations, folderDuration);
+    // worstFitWithLinearSearch(files, fileDurations, folderDuration);
     // worstFitWithPriorityQueue(files, fileDurations, folderDuration);
     // worstFitDecreasingWithLinearSearch(files, fileDurations, folderDuration);
     // worstFitDecreasingWithPriorityQueue(files, fileDurations, folderDuration);
     // firstFitDecreasing(files, fileDurations, folderDuration);
-    // folders = folderFilling(fileDurations, folderDuration);
+    // folderFilling(files, fileDurations, folderDuration);
 
     auto end = chrono::steady_clock::now();
 
@@ -52,7 +52,7 @@ int main() {
 
     cout << "\nExecution time: " << executionTime << " microseconds" << endl;
 
-    saveOutput(fileMap, files, 1, "Worst Fit");
+    saveOutput(fileMap, files, 2, "FolderFilling");
 
     return 0;
 }
@@ -131,7 +131,7 @@ void saveOutput(unordered_map<string, tm>& fileMap, vector<pair<int, int>>& file
                 fileDuration = file.second.tm_hour * 3600 + file.second.tm_min * 60 + file.second.tm_sec;
 
                 if (fileDuration == folders[i][j]) {
-                    sourceFile = "Sample Tests/Sample 1/INPUT/Audios/" + file.first;
+                    sourceFile = "Sample Tests/Sample " + to_string(inputNumber) + "/INPUT/Audios/" + file.first;
 
                     filesystem::copy(sourceFile, folderPath, filesystem::copy_options::overwrite_existing);
 
@@ -265,75 +265,67 @@ void firstFitDecreasing(vector<pair<int, int>>& files, vector<int>& fileDuration
     }
 }
 
-vector<vector<int>> folderFilling(vector<int> fileDurations, int folderDuration) {
-    vector<int> temp;
-    vector<vector<int>> folders;
-
-    sort(fileDurations.begin(), fileDurations.end());   // O(N⋅log(N))
+void folderFilling(vector<pair<int, int>>& files, vector<int> fileDurations, int folderDuration) {
+    int currentFolderNumber = 1;
 
     while (!fileDurations.empty()) {
-        folders.push_back({});
+        // (Indices) First index is the Folder Duration -- Second index is the File Durations Index (from fileDurations).
+        // (Pair Values) First value is the folder duration -- Second value is used for tracing (0 == '←', 1 == '↖').
+        vector<vector<pair<int, int>>> memo(folderDuration + 1, vector<pair<int, int>>(int(fileDurations.size() + 1), make_pair(-1, -1))); // O(N⋅D)
 
-        vector<vector<char>> fileMemo(folderDuration + 1, vector<char>(int(fileDurations.size() + 1), '\0'));   // N * D
-        vector<vector<int>> folderDurationMemo(folderDuration + 1, vector<int>(int(fileDurations.size() + 1), -1)); // N * D
+        folderFillingHelper(memo, fileDurations, int(fileDurations.size()), folderDuration);
 
-        folderFillingHelper(folderDurationMemo, fileMemo, fileDurations, int(fileDurations.size()), folderDuration);
+        tracefolderfiles(memo, files, fileDurations, folderDuration, currentFolderNumber);
 
-        tracefolderfiles(fileMemo, folders.back(), fileDurations, int(fileDurations.size()), folderDuration);
-
-        set_symmetric_difference(fileDurations.begin(), fileDurations.end(),
-            folders.back().begin(), folders.back().end(), back_inserter(temp)); // N + D
-
-        fileDurations = temp;
-
-        temp.clear();
+        ++currentFolderNumber;
     }
-    
-    return folders;
 }
 
-int folderFillingHelper(vector<vector<int>>& folderDurationMemo, vector<vector<char>>& fileMemo, vector<int>& fileDurations, int fileDurationsLength, int folderDuration) {
+int folderFillingHelper(vector<vector<pair<int, int>>>& memo, vector<int>& fileDurations, int fileDurationsLength, int folderDuration) {
     if (fileDurationsLength == 0 || folderDuration == 0) {
-        return folderDurationMemo[folderDuration][fileDurationsLength] = folderDuration;
+        memo[folderDuration][fileDurationsLength].first = folderDuration;
     }
-    else if (folderDurationMemo[folderDuration][fileDurationsLength] != -1) {
-        return folderDurationMemo[folderDuration][fileDurationsLength];
+    else if (memo[folderDuration][fileDurationsLength].first != -1) {
+        return memo[folderDuration][fileDurationsLength].first;
     }
     else if (fileDurations[fileDurationsLength - 1] > folderDuration) {
-        fileMemo[folderDuration][fileDurationsLength] = '-';
-
-        return folderDurationMemo[folderDuration][fileDurationsLength] =
-            folderFillingHelper(folderDurationMemo, fileMemo, fileDurations, fileDurationsLength - 1, folderDuration);
+        memo[folderDuration][fileDurationsLength] =
+            make_pair(folderFillingHelper(memo, fileDurations, fileDurationsLength - 1, folderDuration), 0);
     }
     else {
-        folderDurationMemo[folderDuration][fileDurationsLength] =
-            min(folderFillingHelper(folderDurationMemo, fileMemo, fileDurations, fileDurationsLength - 1, folderDuration),
-                folderFillingHelper(folderDurationMemo, fileMemo, fileDurations, fileDurationsLength - 1,
-                    folderDuration - fileDurations[fileDurationsLength - 1]));
+        memo[folderDuration][fileDurationsLength].first =
+            min(folderFillingHelper(memo, fileDurations, fileDurationsLength - 1, folderDuration),
+                folderFillingHelper(memo, fileDurations, fileDurationsLength - 1, folderDuration - fileDurations[fileDurationsLength - 1]));
 
-        if (folderDurationMemo[folderDuration][fileDurationsLength] == folderDurationMemo[folderDuration][fileDurationsLength - 1]) {
-            fileMemo[folderDuration][fileDurationsLength] = '-';
-
-            return folderDurationMemo[folderDuration][fileDurationsLength];
+        if (memo[folderDuration][fileDurationsLength].first == memo[folderDuration][fileDurationsLength - 1].first) {
+            memo[folderDuration][fileDurationsLength].second = 0;
         }
         else {
-            fileMemo[folderDuration][fileDurationsLength] = '\\';
-
-            return folderDurationMemo[folderDuration][fileDurationsLength];
+            memo[folderDuration][fileDurationsLength].second = 1;
         }
     }
+
+    return memo[folderDuration][fileDurationsLength].first;
 }
 
-void tracefolderfiles(vector<vector<char>>& fileMemo, vector<int>& folder, vector<int>& fileDurations, int fileDurationsLength, int folderDuration) {
-    if (fileDurationsLength == 0 || folderDuration == 0) {
-        return;
-    }
-    else if (fileMemo[folderDuration][fileDurationsLength] == '\\') {
-        tracefolderfiles(fileMemo, folder, fileDurations, fileDurationsLength - 1, folderDuration - fileDurations[fileDurationsLength - 1]);
+void tracefolderfiles(vector<vector<pair<int, int>>>& memo, vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration, int currentFolderNumber) {
+    int modifiedFileDurationsLength = int(fileDurations.size()) - 1;
+    int fileDurationsLength = int(fileDurations.size());
 
-        folder.push_back(fileDurations[fileDurationsLength - 1]);
-    }
-    else {
-        tracefolderfiles(fileMemo, folder, fileDurations, fileDurationsLength - 1, folderDuration);
+    while (fileDurationsLength > 0 && folderDuration > 0) {
+        if (memo[folderDuration][fileDurationsLength].second == 1) {
+            files.push_back(make_pair(fileDurations[modifiedFileDurationsLength], currentFolderNumber));
+
+            folderDuration -= fileDurations[modifiedFileDurationsLength];
+
+            fileDurations.erase(fileDurations.begin() + modifiedFileDurationsLength);
+
+            --modifiedFileDurationsLength;
+            --fileDurationsLength;
+        }
+        else {
+            --modifiedFileDurationsLength;
+            --fileDurationsLength;
+        }
     }
 }
