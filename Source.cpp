@@ -12,49 +12,107 @@
 
 using namespace std;
 
+void run();
+
 void readInput(unordered_map<string, tm>& fileMap, vector<int>& fileDurations, int inputNumber);
-void saveOutput(unordered_map<string, tm>& fileMap, vector<pair<int, int>>& files, int inputNumber, string algorithmName);
+void saveOutput(unordered_map<string, tm> fileMap, vector<pair<int, int>>& files, int inputNumber, string algorithmName);
 
 void worstFitWithLinearSearch(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration);
 void worstFitWithPriorityQueue(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration);
-void worstFitDecreasingWithLinearSearch(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration);
-void worstFitDecreasingWithPriorityQueue(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration);
-void firstFitDecreasing(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration);
+void worstFitDecreasingWithLinearSearch(vector<pair<int, int>>& files, vector<int> fileDurations, int folderDuration);
+void worstFitDecreasingWithPriorityQueue(vector<pair<int, int>>& files, vector<int> fileDurations, int folderDuration);
+void firstFitDecreasing(vector<pair<int, int>>& files, vector<int> fileDurations, int folderDuration);
 void folderFilling(vector<pair<int, int>>& files, vector<int> fileDurations, int folderDuration);
 int folderFillingHelper(vector<vector<pair<int, int>>>& memo, vector<int>& fileDurations, int fileDurationsLength, int folderDuration);
 void tracefolderfiles(vector<vector<pair<int, int>>>& memo, vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration, int currentFolderNumber);
 
 int main() {
+    try {
+        run();
+    }
+    catch (const exception& e) {
+        cout << "Exception: " << e.what() << endl;
+    }
+
+    return 0;
+}
+
+void run() {
     int folderDuration = 100;
-
-    unordered_map<string, tm> fileMap;
-
-    vector<pair<int, int>> files;  // First value is the file duration -- Second value is the folder the file belongs to.
 
     vector<int> fileDurations;
 
-    readInput(fileMap, fileDurations, 2);
+    vector<pair<int, int>> files;  // First value is the file duration -- Second value is the folder the file belongs to.
+
+    unordered_map<string, tm> fileMap;
+
+    long long executionTime;
+    chrono::steady_clock::time_point start, end;
+
+    vector<string> algorithms = { "Worst-fit Linear Search", "Worst-fit Priority Queue", "WorstFit Decreasing Linear Search",
+        "WorstFit Decreasing Priority Queue", "FirstFit Decreasing", "FolderFilling" };
 
     files.reserve(fileDurations.size());
 
-    auto start = chrono::steady_clock::now();
+    for (int i = 1; i < 4; i++) {
+        readInput(fileMap, fileDurations, i);
 
-    // worstFitWithLinearSearch(files, fileDurations, folderDuration);
-    // worstFitWithPriorityQueue(files, fileDurations, folderDuration);
-    // worstFitDecreasingWithLinearSearch(files, fileDurations, folderDuration);
-    // worstFitDecreasingWithPriorityQueue(files, fileDurations, folderDuration);
-    // firstFitDecreasing(files, fileDurations, folderDuration);
-    // folderFilling(files, fileDurations, folderDuration);
+        for (string& algorithm : algorithms) {
+            if (algorithm == "Worst-fit Linear Search") {
+                start = chrono::steady_clock::now();
 
-    auto end = chrono::steady_clock::now();
+                worstFitWithLinearSearch(files, fileDurations, folderDuration);
 
-    auto executionTime = chrono::duration_cast<chrono::microseconds>(end - start).count();
+                end = chrono::steady_clock::now();
+            }
+            else if (algorithm == "Worst-fit Priority Queue") {
+                start = chrono::steady_clock::now();
 
-    cout << "\nExecution time: " << executionTime << " microseconds" << endl;
+                worstFitWithPriorityQueue(files, fileDurations, folderDuration);
 
-    saveOutput(fileMap, files, 2, "FolderFilling");
+                end = chrono::steady_clock::now();
+            }
+            else if (algorithm == "WorstFit Decreasing Linear Search") {
+                start = chrono::steady_clock::now();
 
-    return 0;
+                worstFitDecreasingWithLinearSearch(files, fileDurations, folderDuration);
+
+                end = chrono::steady_clock::now();
+            }
+            else if (algorithm == "WorstFit Decreasing Priority Queue") {
+                start = chrono::steady_clock::now();
+
+                worstFitDecreasingWithPriorityQueue(files, fileDurations, folderDuration);
+
+                end = chrono::steady_clock::now();
+            }
+            else if (algorithm == "FirstFit Decreasing") {
+                start = chrono::steady_clock::now();
+
+                firstFitDecreasing(files, fileDurations, folderDuration);
+
+                end = chrono::steady_clock::now();
+            }
+            else if (algorithm == "FolderFilling") {
+                start = chrono::steady_clock::now();
+
+                folderFilling(files, fileDurations, folderDuration);
+
+                end = chrono::steady_clock::now();
+            }
+
+            executionTime = chrono::duration_cast<chrono::microseconds>(end - start).count();
+
+            cout << "Execution time of test " << i << " using " << algorithm << " : " << executionTime << " microseconds" << endl;
+
+            saveOutput(fileMap, files, i, algorithm);
+
+            files.clear();
+        }
+
+        fileMap.clear();
+        fileDurations.clear();
+    }
 }
 
 void readInput(unordered_map<string, tm>& fileMap, vector<int>& fileDurations, int inputNumber) {
@@ -88,7 +146,7 @@ void readInput(unordered_map<string, tm>& fileMap, vector<int>& fileDurations, i
     audioMetadata.close();
 }
 
-void saveOutput(unordered_map<string, tm>& fileMap, vector<pair<int, int>>& files, int inputNumber, string algorithmName) {
+void saveOutput(unordered_map<string, tm> fileMap, vector<pair<int, int>>& files, int inputNumber, string algorithmName) {
     int folderNumber = 0;
 
     vector<vector<int>> folders = { {} };
@@ -218,21 +276,21 @@ void worstFitWithPriorityQueue(vector<pair<int, int>>& files, vector<int>& fileD
     }
 }
 
-void worstFitDecreasingWithLinearSearch(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration) {
+void worstFitDecreasingWithLinearSearch(vector<pair<int, int>>& files, vector<int> fileDurations, int folderDuration) {
     // The complexity of sort is O(N⋅log(N)) according to https://en.cppreference.com/w/cpp/algorithm/sort
     sort(fileDurations.begin(), fileDurations.end(), greater<int>());
 
     worstFitWithLinearSearch(files, fileDurations, folderDuration);
 }
 
-void worstFitDecreasingWithPriorityQueue(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration) {
+void worstFitDecreasingWithPriorityQueue(vector<pair<int, int>>& files, vector<int> fileDurations, int folderDuration) {
     // The complexity of sort is O(N⋅log(N)) according to https://en.cppreference.com/w/cpp/algorithm/sort
     sort(fileDurations.begin(), fileDurations.end(), greater<int>());
 
     worstFitWithPriorityQueue(files, fileDurations, folderDuration);
 }
 
-void firstFitDecreasing(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration) {
+void firstFitDecreasing(vector<pair<int, int>>& files, vector<int> fileDurations, int folderDuration) {
     // The complexity of sort is O(N⋅log(N)) according to https://en.cppreference.com/w/cpp/algorithm/sort
     sort(fileDurations.begin(), fileDurations.end(), greater<int>());
 
