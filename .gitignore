@@ -4,6 +4,9 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 # Sample Test Files [ME]
+Complete1/
+Complete2/
+Complete3/
 Sample Tests/
 OUTPUT/
 

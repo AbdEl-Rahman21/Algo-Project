@@ -12,10 +12,11 @@
 
 using namespace std;
 
-void run();
+void runSampleTests();
+void runCompleteTests();
 
-void readInput(unordered_map<string, tm>& fileMap, vector<int>& fileDurations, int inputNumber);
-void saveOutput(unordered_map<string, tm> fileMap, vector<pair<int, int>>& files, int inputNumber, string algorithmName);
+void readInput(unordered_map<string, tm>& fileMap, vector<int>& fileDurations, string inputPath);
+void saveOutput(unordered_map<string, tm> fileMap, vector<pair<int, int>>& files, string testType, int testNumber, string algorithm, string audioPath);
 
 void worstFitWithLinearSearch(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration);
 void worstFitWithPriorityQueue(vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration);
@@ -23,12 +24,22 @@ void worstFitDecreasingWithLinearSearch(vector<pair<int, int>>& files, vector<in
 void worstFitDecreasingWithPriorityQueue(vector<pair<int, int>>& files, vector<int> fileDurations, int folderDuration);
 void firstFitDecreasing(vector<pair<int, int>>& files, vector<int> fileDurations, int folderDuration);
 void folderFilling(vector<pair<int, int>>& files, vector<int> fileDurations, int folderDuration);
-int folderFillingHelper(vector<vector<pair<int, int>>>& memo, vector<int>& fileDurations, int fileDurationsLength, int folderDuration);
+void folderFillingHelper(vector<vector<pair<int, int>>>& memo, vector<int>& fileDurations, int folderDuration);
 void tracefolderfiles(vector<vector<pair<int, int>>>& memo, vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration, int currentFolderNumber);
 
 int main() {
+    int testType = 0;
+
     try {
-        run();
+        cout << "Tests:-\n" << "1 - Sample Tests\n" << "2 - Complete Tests\n" << "Enter your choice: ";
+        cin >> testType;
+
+        if (testType == 1) {
+            runSampleTests();
+        }
+        else {
+            runCompleteTests();
+        }
     }
     catch (const exception& e) {
         cout << "Exception: " << e.what() << endl;
@@ -37,7 +48,10 @@ int main() {
     return 0;
 }
 
-void run() {
+void runSampleTests() {
+    string inputPath = "";
+    string audioPath = "";
+
     int folderDuration = 100;
 
     vector<int> fileDurations;
@@ -49,51 +63,53 @@ void run() {
     long long executionTime;
     chrono::steady_clock::time_point start, end;
 
-    vector<string> algorithms = { "Worst-fit Linear Search", "Worst-fit Priority Queue", "WorstFit Decreasing Linear Search",
-        "WorstFit Decreasing Priority Queue", "FirstFit Decreasing", "FolderFilling" };
-
-    files.reserve(fileDurations.size());
+    vector<string> algorithms = { "Worst-Fit Linear Search", "Worst-Fit Priority Queue", "Worst-Fit Decreasing Linear Search",
+        "Worst-Fit Decreasing Priority Queue", "First-Fit Decreasing", "Folder Filling" };
 
     for (int i = 1; i < 4; i++) {
-        readInput(fileMap, fileDurations, i);
+        inputPath = "Sample Tests/Sample " + to_string(i) + "/INPUT/AudiosInfo.txt";
+
+        readInput(fileMap, fileDurations, inputPath);
+
+        files.reserve(fileDurations.size());
 
         for (string& algorithm : algorithms) {
-            if (algorithm == "Worst-fit Linear Search") {
+            if (algorithm == "Worst-Fit Linear Search") {
                 start = chrono::steady_clock::now();
 
                 worstFitWithLinearSearch(files, fileDurations, folderDuration);
 
                 end = chrono::steady_clock::now();
             }
-            else if (algorithm == "Worst-fit Priority Queue") {
+            else if (algorithm == "Worst-Fit Priority Queue") {
                 start = chrono::steady_clock::now();
 
                 worstFitWithPriorityQueue(files, fileDurations, folderDuration);
 
                 end = chrono::steady_clock::now();
             }
-            else if (algorithm == "WorstFit Decreasing Linear Search") {
+            else if (algorithm == "Worst-Fit Decreasing Linear Search") {
                 start = chrono::steady_clock::now();
 
                 worstFitDecreasingWithLinearSearch(files, fileDurations, folderDuration);
 
                 end = chrono::steady_clock::now();
             }
-            else if (algorithm == "WorstFit Decreasing Priority Queue") {
+            else if (algorithm == "Worst-Fit Decreasing Priority Queue") {
                 start = chrono::steady_clock::now();
 
                 worstFitDecreasingWithPriorityQueue(files, fileDurations, folderDuration);
 
                 end = chrono::steady_clock::now();
             }
-            else if (algorithm == "FirstFit Decreasing") {
+            else if (algorithm == "First-Fit Decreasing") {
                 start = chrono::steady_clock::now();
 
                 firstFitDecreasing(files, fileDurations, folderDuration);
 
                 end = chrono::steady_clock::now();
             }
-            else if (algorithm == "FolderFilling") {
+            else if (algorithm == "Folder Filling") {
                 start = chrono::steady_clock::now();
 
                 folderFilling(files, fileDurations, folderDuration);
@@ -103,9 +119,11 @@ void run() {
 
             executionTime = chrono::duration_cast<chrono::microseconds>(end - start).count();
 
-            cout << "Execution time of test " << i << " using " << algorithm << " : " << executionTime << " microseconds" << endl;
+            cout << "Execution time of Sample Test " << i << " using " << algorithm << ": " << executionTime << " microseconds" << endl;
 
-            saveOutput(fileMap, files, i, algorithm);
+            audioPath = "Sample Tests/Sample " + to_string(i) + "/INPUT/Audios/";
+
+            saveOutput(fileMap, files, "Sample", i, algorithm, audioPath);
 
             files.clear();
         }
@@ -115,7 +133,64 @@ void run() {
     }
 }
 
-void readInput(unordered_map<string, tm>& fileMap, vector<int>& fileDurations, int inputNumber) {
+void runCompleteTests() {
+    string inputPath = "";
+    string audioPath = "";
+
+    int folderDuration;
+
+    vector<int> fileDurations;
+
+    vector<pair<int, int>> files;  // First value is the file duration -- Second value is the folder the file belongs to.
+
+    unordered_map<string, tm> fileMap;
+
+    long long executionTime;
+    chrono::steady_clock::time_point start, end;
+
+    for (int i = 1; i < 4; i++) {
+        inputPath = "Complete" + to_string(i) + "/AudiosInfo.txt";
+
+        readInput(fileMap, fileDurations, inputPath);
+
+        files.reserve(fileDurations.size());
+
+        switch (i) {
+        case 1:
+            folderDuration = 152;
+
+            break;
+        case 2:
+            folderDuration = 275;
+
+            break;
+        case 3:
+            folderDuration = 321;
+
+            break;
+        }
+
+        start = chrono::steady_clock::now();
+
+        folderFilling(files, fileDurations, folderDuration);
+
+        end = chrono::steady_clock::now();
+
+        executionTime = chrono::duration_cast<chrono::microseconds>(end - start).count();
+
+        cout << "Execution time of Complete Test " << i << " using Folder Filling: " << executionTime << " microseconds" << endl;
+
+        audioPath = "Complete" + to_string(i) + "/Audios/";
+
+        saveOutput(fileMap, files, "Complete", i, "Folder Filling", audioPath);
+
+        files.clear();
+        fileMap.clear();
+        fileDurations.clear();
+    }
+}
+
+void readInput(unordered_map<string, tm>& fileMap, vector<int>& fileDurations, string inputPath) {
     int numberOfFiles = 0;
 
     string fileName = "";
@@ -123,7 +198,7 @@ void readInput(unordered_map<string, tm>& fileMap, vector<int>& fileDurations, i
 
     ifstream audioMetadata;
 
-    audioMetadata.open("Sample Tests/Sample " + to_string(inputNumber) + "/INPUT/AudiosInfo.txt", ios::in);
+    audioMetadata.open(inputPath, ios::in);
 
     audioMetadata >> numberOfFiles;
 
@@ -146,7 +221,7 @@ void readInput(unordered_map<string, tm>& fileMap, vector<int>& fileDurations, i
     audioMetadata.close();
 }
 
-void saveOutput(unordered_map<string, tm> fileMap, vector<pair<int, int>>& files, int inputNumber, string algorithmName) {
+void saveOutput(unordered_map<string, tm> fileMap, vector<pair<int, int>>& files, string testType, int testNumber, string algorithm, string audioPath) { // Fix!!!!!!!!!
     int folderNumber = 0;
 
     vector<vector<int>> folders = { {} };
@@ -174,7 +249,7 @@ void saveOutput(unordered_map<string, tm> fileMap, vector<pair<int, int>>& files
     ofstream folderMetadata;
 
     for (int i = 0; i < folders.size(); i++) {
-        folderPath = "OUTPUT/Sample " + to_string(inputNumber) + "/" + algorithmName + "/F" + to_string(i + 1);
+        folderPath = "OUTPUT/" + testType + " Test " + to_string(testNumber) + "/" + algorithm + "/F" + to_string(i + 1);
 
         filesystem::create_directories(folderPath);
 
@@ -182,18 +257,18 @@ void saveOutput(unordered_map<string, tm> fileMap, vector<pair<int, int>>& files
 
         folderMetadata << "F" + to_string(i + 1) << endl;
 
-        tm totalDuration{};
+        tm totalDuration = { 0 };
 
         for (int j = 0; j < folders[i].size(); j++) {
             for (auto& file : fileMap) {
                 fileDuration = file.second.tm_hour * 3600 + file.second.tm_min * 60 + file.second.tm_sec;
 
                 if (fileDuration == folders[i][j]) {
-                    sourceFile = "Sample Tests/Sample " + to_string(inputNumber) + "/INPUT/Audios/" + file.first;
+                    sourceFile = audioPath + file.first;
 
                     filesystem::copy(sourceFile, folderPath, filesystem::copy_options::overwrite_existing);
 
-                    folderMetadata << file.first << "\t" << put_time(&file.second, "%T") << endl;
+                    folderMetadata << file.first << " " << put_time(&file.second, "%T") << endl;
 
                     totalDuration.tm_hour += file.second.tm_hour;
                     totalDuration.tm_min += file.second.tm_min;
@@ -206,7 +281,11 @@ void saveOutput(unordered_map<string, tm> fileMap, vector<pair<int, int>>& files
             }
         }
 
-        mktime(&totalDuration);
+        totalDuration.tm_min += totalDuration.tm_sec / 60;
+        totalDuration.tm_sec %= 60;
+
+        totalDuration.tm_hour += totalDuration.tm_min / 60;
+        totalDuration.tm_min %= 60;
 
         folderMetadata << put_time(&totalDuration, "%T") << endl;
 
@@ -331,7 +410,7 @@ void folderFilling(vector<pair<int, int>>& files, vector<int> fileDurations, int
         // (Pair Values) First value is the folder duration -- Second value is used for tracing (0 == '←', 1 == '↖').
         vector<vector<pair<int, int>>> memo(folderDuration + 1, vector<pair<int, int>>(int(fileDurations.size() + 1), make_pair(-1, -1))); // O(N⋅D)
 
-        folderFillingHelper(memo, fileDurations, int(fileDurations.size()), folderDuration);
+        folderFillingHelper(memo, fileDurations, folderDuration);
 
         tracefolderfiles(memo, files, fileDurations, folderDuration, currentFolderNumber);
 
@@ -339,31 +418,22 @@ void folderFilling(vector<pair<int, int>>& files, vector<int> fileDurations, int
     }
 }
 
-int folderFillingHelper(vector<vector<pair<int, int>>>& memo, vector<int>& fileDurations, int fileDurationsLength, int folderDuration) {
-    if (fileDurationsLength == 0 || folderDuration == 0) {
-        memo[folderDuration][fileDurationsLength].first = folderDuration;
-    }
-    else if (memo[folderDuration][fileDurationsLength].first != -1) {
-        return memo[folderDuration][fileDurationsLength].first;
-    }
-    else if (fileDurations[fileDurationsLength - 1] > folderDuration) {
-        memo[folderDuration][fileDurationsLength] =
-            make_pair(folderFillingHelper(memo, fileDurations, fileDurationsLength - 1, folderDuration), 0);
-    }
-    else {
-        memo[folderDuration][fileDurationsLength].first =
-            min(folderFillingHelper(memo, fileDurations, fileDurationsLength - 1, folderDuration),
-                folderFillingHelper(memo, fileDurations, fileDurationsLength - 1, folderDuration - fileDurations[fileDurationsLength - 1]));
+void folderFillingHelper(vector<vector<pair<int, int>>>& memo, vector<int>& fileDurations, int folderDuration) {
+    for (int i = 0; i <= folderDuration; i++) {
+        for (int j = 0; j <= fileDurations.size(); j++) {
+            if (i == 0 || j == 0) {
+                memo[i][j].first = i;
+            }
+            else if (fileDurations[j - 1] > i) {
+                memo[i][j] = memo[i][j - 1];
+            }
+            else {
+                memo[i][j].first = min(memo[i][j - 1].first, memo[i - fileDurations[j - 1]][j - 1].first);
 
-        if (memo[folderDuration][fileDurationsLength].first == memo[folderDuration][fileDurationsLength - 1].first) {
-            memo[folderDuration][fileDurationsLength].second = 0;
-        }
-        else {
-            memo[folderDuration][fileDurationsLength].second = 1;
+                memo[i][j].second = (memo[i][j].first == memo[i][j - 1].first) ? 0 : 1;
+            }
         }
     }
-
-    return memo[folderDuration][fileDurationsLength].first;
 }
 
 void tracefolderfiles(vector<vector<pair<int, int>>>& memo, vector<pair<int, int>>& files, vector<int>& fileDurations, int folderDuration, int currentFolderNumber) {
