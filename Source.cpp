@@ -91,7 +91,7 @@ void runTests(string testType) {
 
             executionTime = chrono::duration_cast<chrono::microseconds>(end - start).count();
 
-            cout << "Execution time of Sample Test " << i << " using " << algorithm->getName() << ": " << executionTime << " microseconds" << endl;
+            cout << "Execution time of " << testType << " Test " << i << " using " << algorithm->getName() << ": " << executionTime << " microseconds" << endl;
 
             audiofiles->save(fileMap, files, testType, i, algorithm->getName());
 
