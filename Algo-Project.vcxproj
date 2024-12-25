@@ -128,6 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AudioFiles.cpp" />
     <ClCompile Include="FirstFitDecreasing.cpp" />
     <ClCompile Include="FolderFilling.cpp" />
     <ClCompile Include="Source.cpp" />
@@ -137,6 +138,7 @@
     <ClCompile Include="WorstFitPriorityQueue.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AudioFiles.h" />
     <ClInclude Include="FirstFitDecreasing.h" />
     <ClInclude Include="FolderFilling.h" />
     <ClInclude Include="IAlgorithm.h" />
